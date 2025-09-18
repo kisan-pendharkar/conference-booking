@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <!-- <h1>Upcoming Conferences</h1> -->
+        {% if user.is_authenticated and user.is_superuser %}
+            <a href="{% url 'add_conference' %}" class="btn btn-success mb-3">Add Conference</a>
+        {% endif %}
+        
+        <!-- Search and Filter Form -->
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-md-6">
+                <input type="text" class="form-control" name="search" 
+                       placeholder="Search conferences..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" name="category">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Conferences Grouped by Location -->
+{% if conferences_by_location %}
+    {% for location, conferences in conferences_by_location.items %}
+        <h3 class="mt-5">{{ location.name }}</h3>
+        {% if location.address %}<p class="text-muted">{{ location.address }}</p>{% endif %}
+        <div class="row">
+            {% for conference in conferences %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        {% if conference.image %}
+                            <img src="{{ conference.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ conference.title }}</h5>
+                            <p class="card-text">{{ conference.description|truncatewords:20 }}</p>
+                            <p class="text-muted">
+                                <strong>Date:</strong> {{ conference.date }}<br>
+                                <strong>Time:</strong> {{ conference.time }}<br>
+                                <strong>Venue:</strong> {{ conference.venue }}<br>
+                                <strong>Price:</strong> ${{ conference.price }}
+                            </p>
+                            <p class="text-info">
+                                <strong>Available Seats:</strong> {{ conference.available_seats }}
+                            </p>
+                            {% if user.is_authenticated and user.is_superuser %}
+                                <a href="{% url 'edit_conference' conference.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="{% url 'delete_conference' conference.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'conference_detail' conference.pk %}" class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12"><p class="text-muted">No conferences for this location.</p></div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="text-center py-5">
+        <h4>No conferences found</h4>
+        <p class="text-muted">There are no upcoming conferences matching your criteria.</p>
+    </div>
+{% endif %}
+{% endblock %}

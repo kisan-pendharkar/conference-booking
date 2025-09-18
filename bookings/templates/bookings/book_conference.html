@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>Book Conference: {{ conference.title }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Conference Details</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Date:</strong> {{ conference.date }}</li>
+                            <li><strong>Time:</strong> {{ conference.time }}</li>
+                            <li><strong>Venue:</strong> {{ conference.venue }}</li>
+                            <li><strong>Price:</strong> ${{ conference.price }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Booking Information</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Available Seats:</strong> {{ conference.available_seats }}</li>
+                            <li><strong>Requires Approval:</strong> 
+                                {% if conference.requires_approval %}Yes{% else %}No{% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="justification" class="form-label">
+                            Justification <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="justification" name="justification" rows="4" 
+                                  placeholder="Please explain why you need to attend this conference..." required></textarea>
+                        <div class="form-text">Provide a clear justification for attending this conference.</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'conference_detail' conference.pk %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-success">Submit Booking Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

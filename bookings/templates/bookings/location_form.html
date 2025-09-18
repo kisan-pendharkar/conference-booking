@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Add Location</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Add Location</button>
+    <a href="{% url 'add_conference' %}" class="btn btn-secondary">Back to Add Conference</a>
+  </form>
+{% endblock %}
