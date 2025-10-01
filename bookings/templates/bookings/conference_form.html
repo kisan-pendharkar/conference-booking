@@ -5,10 +5,6 @@
     {% csrf_token %}
     {{ form.title.label_tag }} {{ form.title }}<br>
     {{ form.description.label_tag }} {{ form.description }}<br>
-    {{ form.category.label_tag }} {{ form.category }}<br>
-    {{ form.date.label_tag }} {{ form.date }}<br>
-    {{ form.time.label_tag }} {{ form.time }}<br>
-    {{ form.end_date.label_tag }} {{ form.end_date }}<br>
     <label for="id_location">Location:</label>
     {{ form.location }}
     {% if user.is_authenticated and user.is_superuser %}
@@ -16,10 +12,7 @@
     {% endif %}<br>
     {{ form.venue.label_tag }} {{ form.venue }}<br>
     {{ form.capacity.label_tag }} {{ form.capacity }}<br>
-    {{ form.price.label_tag }} {{ form.price }}<br>
-    {{ form.priority.label_tag }} {{ form.priority }}<br>
     {{ form.requires_approval.label_tag }} {{ form.requires_approval }}<br>
-    {{ form.external_link.label_tag }} {{ form.external_link }}<br>
     {{ form.image.label_tag }} {{ form.image }}<br>
     <button type="submit">{{ action }}</button>
   </form>

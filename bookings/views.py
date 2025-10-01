@@ -1,10 +1,7 @@
 # Manager/Admin views
-def is_admin(user):
-    """Check if user is admin only"""
-    return (hasattr(user, 'is_admin') and user.is_admin()) or user.is_superuser
+
 # bookings/views.py
 from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
 from django import forms
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
@@ -23,10 +20,13 @@ from datetime import datetime, timedelta
 from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.contrib import messages
-
-# Import your models (you'll need to create these)
-
 from .models import Conference, Booking, ConferenceCategory, Location
+
+
+def is_admin(user):
+    """Check if user is admin only"""
+    return (hasattr(user, 'is_admin') and user.is_admin()) or user.is_superuser
+
 # Location Form
 class LocationForm(forms.ModelForm):
     class Meta:
@@ -57,9 +57,9 @@ def is_admin(user):
 class ConferenceForm(forms.ModelForm):
     class Meta:
         model = Conference
-        fields = ['title', 'description', 'category', 'date', 'time', 'end_date', 'location', 'venue', 'capacity', 'price', 'priority', 'requires_approval', 'external_link', 'image']
+        fields = ['title', 'description', 'location' , 'capacity', 'requires_approval', 'image']
 
-# Add Conference
+# Add Conference    
 @login_required
 @user_passes_test(is_admin)
 def add_conference(request):
@@ -108,9 +108,7 @@ def home(request):
     categories = ConferenceCategory.objects.all()
     
     # Get upcoming conferences
-    conferences = Conference.objects.filter(
-        date__gte=timezone.now().date()
-    ).order_by('date')
+    conferences = Conference.objects.order_by('created_at')
 
     # Search functionality
     search_query = request.GET.get('search')
@@ -148,14 +146,12 @@ def dashboard(request):
     user_bookings = Booking.objects.filter(user=request.user).order_by('-booking_date')[:5]
     
     # Get upcoming conferences
-    upcoming_conferences = Conference.objects.filter(
-        date__gte=timezone.now().date()
-    ).order_by('date')[:5]
-    
+    upcoming_conferences = Conference.objects.order_by('created_at')[:5]
+
     # Calculate statistics
     total_conferences = Conference.objects.count()
     booked_conferences = Booking.objects.filter(user=request.user).count()
-    available_conferences = Conference.objects.filter(date__gte=timezone.now().date()).count()
+    available_conferences = Conference.objects.filter(created_at__gte=timezone.now().date()).count()
     stats = {
         'total_conferences': total_conferences,
         'booked_conferences': booked_conferences,
@@ -256,24 +252,29 @@ def cancel_booking(request, pk):
     messages.success(request, f'Successfully cancelled booking for {conference_title}.')
     return redirect('my_bookings')
 
+
+
 @login_required
 def my_bookings(request):
     """User's booking list"""
-    bookings = Booking.objects.filter(user=request.user).order_by('-booking_date')
-    
+    # Show all bookings to admin, only user's bookings otherwise
+    is_admin_user = is_admin(request.user)
+    if is_admin_user:
+        bookings = Booking.objects.order_by('-booking_date').all()
+    else:
+        bookings = Booking.objects.filter(user=request.user).order_by('-booking_date')
     # Filter by status
     status_filter = request.GET.get('status')
     if status_filter and status_filter != 'all':
         bookings = bookings.filter(status=status_filter)
-    
     # Pagination
     paginator = Paginator(bookings, 10)
     page_number = request.GET.get('page')
     bookings = paginator.get_page(page_number)
-    
     return render(request, 'bookings/my_bookings.html', {
         'bookings': bookings,
         'status_filter': status_filter,
+        'is_admin_user': is_admin_user,
     })
 
 # Manager/Admin views
@@ -290,11 +291,12 @@ def manage_bookings(request):
     # Get bookings based on user role
     if hasattr(request.user, 'is_admin') and request.user.is_admin():
         bookings = Booking.objects.all()
+        print("Admin user - accessing all bookings", bookings)
     elif hasattr(request.user, 'department') and request.user.department:
         bookings = Booking.objects.filter(user__department=request.user.department)
     else:
         bookings = Booking.objects.none()
-    
+    print("Admin user - accessing all bookings", bookings)
     # Filter by status
     status_filter = request.GET.get('status', 'pending')
     if status_filter and status_filter != 'all':
@@ -320,13 +322,14 @@ def approve_booking(request, pk):
     
     # Check permissions
     can_approve = False
-    if hasattr(request.user, 'is_admin') and request.user.is_admin():
+    if (
+        (hasattr(request.user, 'is_admin') and request.user.is_admin()) or
+        request.user.is_staff or request.user.is_superuser
+    ):
         can_approve = True
     elif (hasattr(request.user, 'is_manager') and request.user.is_manager() and 
           hasattr(request.user, 'department') and hasattr(booking.user, 'department') and
           booking.user.department == request.user.department):
-        can_approve = True
-    elif request.user.is_staff or request.user.is_superuser:
         can_approve = True
     
     if not can_approve:
@@ -446,7 +449,7 @@ def export_bookings(request):
             booking.user.email,
             getattr(booking.user, 'department', 'N/A'),
             booking.conference.title,
-            booking.conference.date,
+            # booking.conference.date,
             booking.get_status_display(),
             booking.booking_date.strftime('%Y-%m-%d %H:%M'),
             booking.conference.price,

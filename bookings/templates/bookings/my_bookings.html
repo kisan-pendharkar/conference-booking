@@ -68,6 +68,12 @@
                                     Cancel
                                 </a>
                             {% endif %}
+                            {% if is_admin_user and booking.status == 'pending' %}
+                                <a href="{% url 'approve_booking' booking.pk %}"
+                                   class="btn btn-sm btn-outline-success ms-1">
+                                    Approve
+                                </a>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

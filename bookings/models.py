@@ -33,17 +33,9 @@ class Conference(models.Model):
     
     title = models.CharField(max_length=200)
     description = models.TextField()
-    category = models.ForeignKey(ConferenceCategory, on_delete=models.CASCADE, null=True, blank=True)
-    date = models.DateField()
-    time = models.TimeField()
-    end_date = models.DateField(null=True, blank=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True)
-    venue = models.CharField(max_length=200)
     capacity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
     requires_approval = models.BooleanField(default=True)
-    external_link = models.URLField(blank=True)
     image = models.ImageField(upload_to='conferences/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -62,12 +54,12 @@ class Conference(models.Model):
         ).count()
         return self.capacity - booked
     
-    def total_cost(self):
-        """Calculate total cost of approved bookings"""
-        return Booking.objects.filter(
-            conference=self, 
-            status='approved'
-        ).count() * self.price
+    # def total_cost(self):
+    #     """Calculate total cost of approved bookings"""
+    #     return Booking.objects.filter(
+    #         conference=self, 
+    #         status='approved'
+    #     ).count() * self.price
 
 class Booking(models.Model):
     STATUS_CHOICES = [
